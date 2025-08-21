@@ -1,0 +1,13 @@
+# Core dependencies
+sentence-transformers>=2.2.0
+requests>=2.25.0
+numpy>=1.21.0
+
+# Vector store dependencies (install as needed)
+faiss-cpu>=1.7.0  # For Faiss vector store
+scikit-learn>=1.0.0  # For pickle vector store cosine similarity
+chromadb>=0.4.0  # For ChromaDB vector store
+
+# Optional dependencies for document processing
+PyPDF2>=3.0.0
+python-docx>=0.8.11

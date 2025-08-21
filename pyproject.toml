@@ -1,0 +1,102 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tinyrag"
+version = "0.1.0"
+description = "A minimal Python library for Retrieval-Augmented Generation with multiple vector store backends"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "TinyRag Team", email = "contact@tinyrag.dev"}
+]
+maintainers = [
+    {name = "TinyRag Team", email = "contact@tinyrag.dev"}
+]
+keywords = [
+    "rag", "retrieval", "augmented", "generation", "vector", "database", 
+    "embeddings", "similarity", "search", "nlp", "ai", "machine-learning"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8", 
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Linguistic",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "sentence-transformers>=2.2.0",
+    "requests>=2.25.0",
+    "numpy>=1.21.0",
+]
+
+[project.optional-dependencies]
+faiss = ["faiss-cpu>=1.7.0"]
+chroma = ["chromadb>=0.4.0"]
+pickle = ["scikit-learn>=1.0.0"]
+docs = ["PyPDF2>=3.0.0", "python-docx>=0.8.11"]
+all = [
+    "faiss-cpu>=1.7.0",
+    "chromadb>=0.4.0",
+    "scikit-learn>=1.0.0", 
+    "PyPDF2>=3.0.0",
+    "python-docx>=0.8.11"
+]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.0",
+    "black>=21.0",
+    "flake8>=3.8",
+    "mypy>=0.910",
+    "twine>=3.0",
+    "build>=0.7"
+]
+
+[project.urls]
+Homepage = "https://github.com/Kenosis01/TinyRag"
+Documentation = "https://github.com/Kenosis01/TinyRag#readme"
+Repository = "https://github.com/Kenosis01/TinyRag.git"
+"Bug Tracker" = "https://github.com/Kenosis01/TinyRag/issues"
+Changelog = "https://github.com/Kenosis01/TinyRag/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+packages = ["tinyrag", "tinyrag.core", "tinyrag.vector_stores"]
+
+[tool.setuptools.package-data]
+tinyrag = ["py.typed"]
+
+[tool.black]
+line-length = 88
+target-version = ['py37']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.7"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
