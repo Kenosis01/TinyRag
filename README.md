@@ -9,6 +9,7 @@
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://tinyrag-docs.netlify.app/docs)
+[![PyPI Downloads](https://static.pepy.tech/badge/tinyrag)](https://pepy.tech/projects/tinyrag)
 
 
 
