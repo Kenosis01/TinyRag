@@ -70,11 +70,18 @@ class TinyRag:
     def _process_single_document(self, item: Union[str, Path]) -> List[str]:
         """Process a single document and return its chunks"""
         try:
-            text = extract_text(item)
-            if text.strip():
+            # Use enhanced text extraction with progress indication
+            text = extract_text(item, show_progress=True)
+            if text and text.strip():
                 chunks = chunk_text(text, self.chunk_size)
-                print(f"✓ Processed: {item if isinstance(item, str) and len(str(item)) < 50 else str(item)[:50] + '...'}")
-                return chunks
+                if chunks:
+                    item_name = item if isinstance(item, str) and len(str(item)) < 50 else str(item)[:50] + '...'
+                    print(f"✓ Processed: {item_name} ({len(chunks)} chunks)")
+                    return chunks
+                else:
+                    print(f"⚠ No chunks created from: {item}")
+            else:
+                print(f"⚠ No text content found in: {item}")
         except Exception as e:
             print(f"⚠ Warning: Failed to process {item}: {e}")
         return []
@@ -220,22 +227,100 @@ class TinyRag:
         """Load the vector store from disk"""
         self.vector_store.load(filepath)
     
-    def add_codebase(self, directory: str, recursive: bool = True, use_threading: bool = True) -> None:
-        """Add codebase from directory by parsing and indexing code functions
+    def add_code_file(self, file_path: str) -> None:
+        """Add a single code file by parsing and indexing its functions
         
         Args:
-            directory: Path to directory containing code files
-            recursive: Whether to scan subdirectories recursively
-            use_threading: Whether to use multithreading for processing
+            file_path: Path to the code file to process
         """
-        # Scan directory for code files
-        code_files = CodeParser.scan_directory(directory, recursive=recursive)
+        from pathlib import Path
         
-        if not code_files:
-            print(f"⚠ No code files found in: {directory}")
+        file_path_obj = Path(file_path)
+        
+        # Check if file exists
+        if not file_path_obj.exists():
+            print(f"⚠ File not found: {file_path}")
             return
         
-        print(f"Found {len(code_files)} code files in {directory}")
+        # Check if it's a file (not directory)
+        if not file_path_obj.is_file():
+            print(f"⚠ Path is not a file: {file_path}")
+            return
+        
+        # Check if it's a supported code file
+        if not CodeParser.is_code_file(str(file_path)):
+            print(f"⚠ Unsupported file type: {file_path}")
+            return
+        
+        print(f"Processing code file: {file_path}")
+        
+        # Parse the file
+        functions = CodeParser.parse_file(str(file_path))
+        
+        if functions and functions[0]['type'] != 'error':
+            # Format functions for embedding
+            formatted_chunks = []
+            for func in functions:
+                chunk = f"File: {func['file']}\nLanguage: {func['language']}\nType: {func['type']}\nName: {func['name']}\nCode:\n{func['content']}"
+                formatted_chunks.append(chunk)
+            
+            print(f"Generating embeddings for {len(formatted_chunks)} code functions...")
+            
+            # Generate embeddings for all chunks
+            embeddings = self.provider.get_embeddings(formatted_chunks)
+            
+            # Add to vector store
+            self.vector_store.add_vectors(embeddings, formatted_chunks)
+            
+            print(f"✓ Added {len(formatted_chunks)} code functions from {file_path_obj.name} to vector store")
+        else:
+            print(f"⚠ No valid code functions found in: {file_path}")
+    
+    def add_codebase(self, path: str, recursive: bool = True, use_threading: bool = True) -> None:
+        """Add codebase from directory or single file by parsing and indexing code functions
+        
+        Args:
+            path: Path to directory containing code files OR path to a single code file
+            recursive: Whether to scan subdirectories recursively (only applies to directories)
+            use_threading: Whether to use multithreading for processing (only applies to directories with multiple files)
+        
+        Examples:
+            # Process a single code file
+            rag.add_codebase("path/to/my_file.py")
+            
+            # Process a directory
+            rag.add_codebase("path/to/project/")
+            
+            # Process directory non-recursively
+            rag.add_codebase("path/to/project/", recursive=False)
+        """
+        from pathlib import Path
+        
+        path_obj = Path(path)
+        
+        # Check if path exists
+        if not path_obj.exists():
+            print(f"⚠ Path not found: {path}")
+            return
+        
+        # Handle single file
+        if path_obj.is_file():
+            self.add_code_file(str(path))
+            return
+        
+        # Handle directory
+        if not path_obj.is_dir():
+            print(f"⚠ Path is neither a file nor a directory: {path}")
+            return
+        
+        # Scan directory for code files
+        code_files = CodeParser.scan_directory(path, recursive=recursive)
+        
+        if not code_files:
+            print(f"⚠ No code files found in: {path}")
+            return
+        
+        print(f"Found {len(code_files)} code files in {path}")
         
         all_functions = []
         
