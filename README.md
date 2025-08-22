@@ -8,7 +8,7 @@
 [![PyPI version](https://badge.fury.io/py/tinyrag.svg)](https://badge.fury.io/py/tinyrag)
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](docs/README.md)
+[![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://tinyrag-docs.netlify.app/docs)
 
 
 
