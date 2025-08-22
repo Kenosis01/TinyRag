@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="logo.jpg" alt="Tinyrag Logo" width="200"/>
+</p>
+
+
 # TinyRag 🚀
 
 [![PyPI version](https://badge.fury.io/py/tinyrag.svg)](https://badge.fury.io/py/tinyrag)
