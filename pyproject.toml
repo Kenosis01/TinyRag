@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tinyrag"
-version = "0.3.1"
+version = "0.3.2"
 description = "A minimal Python library for Retrieval-Augmented Generation with codebase indexing and multiple vector store backends"
 readme = "README.md"
 license = {text = "MIT"}
@@ -44,20 +44,23 @@ dependencies = [
     "faiss-cpu",
     "scikit-learn",
     "chromadb",
-    "PyPDF2",
-    "python-docx",
+    "pdfminer.six>=20221105",  # Updated for better PDF support
+    "python-docx>=0.8.11",     # Updated DOCX version
 ]
 
 [project.optional-dependencies]
 faiss = ["faiss-cpu>=1.7.0"]
 chroma = ["chromadb>=0.4.0"]
 pickle = ["scikit-learn>=1.0.0"]
-docs = ["PyPDF2>=3.0.0", "python-docx>=0.8.11"]
+docs = [
+    "pdfminer.six>=20221105",
+    "python-docx>=0.8.11"
+]
 all = [
     "faiss-cpu>=1.7.0",
     "chromadb>=0.4.0",
-    "scikit-learn>=1.0.0", 
-    "PyPDF2>=3.0.0",
+    "scikit-learn>=1.0.0",
+    "pdfminer.six>=20221105",
     "python-docx>=0.8.11"
 ]
 dev = [

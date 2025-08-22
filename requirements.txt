@@ -7,3 +7,4 @@ scikit-learn
 chromadb
 PyPDF2
 python-docx
+pdfminer.six>=20221105
