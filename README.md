@@ -1,3 +1,6 @@
+![Tinyrag Logo](logo.jpg)
+
+
 # TinyRag 🚀
 
 [![PyPI version](https://badge.fury.io/py/tinyrag.svg)](https://badge.fury.io/py/tinyrag)
