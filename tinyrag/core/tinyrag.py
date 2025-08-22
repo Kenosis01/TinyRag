@@ -219,3 +219,119 @@ class TinyRag:
     def load_vector_store(self, filepath: str) -> None:
         """Load the vector store from disk"""
         self.vector_store.load(filepath)
+    
+    def add_codebase(self, directory: str, recursive: bool = True, use_threading: bool = True) -> None:
+        """Add codebase from directory by parsing and indexing code functions
+        
+        Args:
+            directory: Path to directory containing code files
+            recursive: Whether to scan subdirectories recursively
+            use_threading: Whether to use multithreading for processing
+        """
+        # Scan directory for code files
+        code_files = CodeParser.scan_directory(directory, recursive=recursive)
+        
+        if not code_files:
+            print(f"⚠ No code files found in: {directory}")
+            return
+        
+        print(f"Found {len(code_files)} code files in {directory}")
+        
+        all_functions = []
+        
+        if use_threading and len(code_files) > 1:
+            # Use multithreading for multiple files
+            print(f"Processing {len(code_files)} code files with multithreading...")
+            
+            with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                # Submit all files for processing
+                future_to_file = {executor.submit(CodeParser.parse_file, file_path): file_path for file_path in code_files}
+                
+                # Collect results as they complete
+                for future in concurrent.futures.as_completed(future_to_file):
+                    functions = future.result()
+                    if functions and functions[0]['type'] != 'error':
+                        with self._lock:  # Thread-safe addition
+                            all_functions.extend(functions)
+        else:
+            # Sequential processing
+            print(f"Processing {len(code_files)} code files sequentially...")
+            for file_path in code_files:
+                functions = CodeParser.parse_file(file_path)
+                if functions and functions[0]['type'] != 'error':
+                    all_functions.extend(functions)
+        
+        if all_functions:
+            # Format functions for embedding
+            formatted_chunks = []
+            for func in all_functions:
+                chunk = f"File: {func['file']}\nLanguage: {func['language']}\nType: {func['type']}\nName: {func['name']}\nCode:\n{func['content']}"
+                formatted_chunks.append(chunk)
+            
+            print(f"Generating embeddings for {len(formatted_chunks)} code functions...")
+            
+            # Generate embeddings for all chunks
+            embeddings = self.provider.get_embeddings(formatted_chunks)
+            
+            # Add to vector store (thread-safe)
+            with self._lock:
+                self.vector_store.add_vectors(embeddings, formatted_chunks)
+            
+            print(f"✓ Added {len(formatted_chunks)} code functions to vector store")
+        else:
+            print("⚠ No valid code functions found to add")
+    
+    def search_code(self, query: str, k: int = 5, language: Optional[str] = None, min_score: float = 0.0) -> List[Tuple[str, float]]:
+        """Search for code functions
+        
+        Args:
+            query: Search query
+            k: Number of results to return
+            language: Filter by programming language (optional)
+            min_score: Minimum similarity score threshold
+            
+        Returns:
+            List of (code_chunk, score) tuples
+        """
+        # Generate embedding for the query
+        query_embedding = self.provider.get_embeddings([query])[0]
+        
+        # Search for relevant chunks
+        results = self.vector_store.search(query_embedding, k=k * 2)  # Get more results for filtering
+        
+        # Filter by language if specified
+        if language:
+            filtered_results = []
+            for text, score in results:
+                if f"Language: {language.lower()}" in text.lower() and score >= min_score:
+                    filtered_results.append((text, score))
+                    if len(filtered_results) >= k:
+                        break
+            return filtered_results[:k]
+        
+        # Filter by minimum score
+        return [(text, score) for text, score in results if score >= min_score][:k]
+    
+    def get_function_by_name(self, function_name: str, k: int = 5) -> List[Tuple[str, float]]:
+        """Search for functions by name
+        
+        Args:
+            function_name: Name of function to search for
+            k: Number of results to return
+            
+        Returns:
+            List of (code_chunk, score) tuples
+        """
+        # Generate embedding for the function name
+        query_embedding = self.provider.get_embeddings([function_name])[0]
+        
+        # Search for relevant chunks
+        results = self.vector_store.search(query_embedding, k=k)
+        
+        # Filter to only include exact name matches
+        exact_matches = []
+        for text, score in results:
+            if f"Name: {function_name}" in text:
+                exact_matches.append((text, score))
+        
+        return exact_matches[:k]
