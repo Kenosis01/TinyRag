@@ -1,4 +1,6 @@
-![Tinyrag Logo](logo.jpg)
+<p align="center">
+  <img src="logo.jpg" alt="Tinyrag Logo" width="200"/>
+</p>
 
 
 # TinyRag 🚀
