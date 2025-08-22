@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def extract_text(data: Union[str, Path]) -> str:
-    """Extract text from file path or return raw string"""
+    """Extract text from file path or return raw string. Supports txt, pdf, docx, csv."""
     if isinstance(data, (str, Path)) and os.path.isfile(data):
         file_path = Path(data)
         extension = file_path.suffix.lower()
@@ -19,26 +19,29 @@ def extract_text(data: Union[str, Path]) -> str:
         
         elif extension == '.pdf':
             try:
-                import PyPDF2
-                with open(file_path, 'rb') as f:
-                    reader = PyPDF2.PdfReader(f)
-                    text = ""
-                    for page in reader.pages:
-                        text += page.extract_text() + "\n"
-                    return text
+                from pdfminer.high_level import extract_text as pdfminer_extract_text
+                return pdfminer_extract_text(str(file_path))
             except ImportError:
-                raise ImportError("PyPDF2 required for PDF support. Install with: pip install PyPDF2")
+                raise ImportError("pdfminer.six required for PDF support. Install with: pip install pdfminer.six")
         
         elif extension == '.docx':
             try:
                 from docx import Document
                 doc = Document(file_path)
-                text = ""
-                for paragraph in doc.paragraphs:
-                    text += paragraph.text + "\n"
+                text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
                 return text
             except ImportError:
                 raise ImportError("python-docx required for DOCX support. Install with: pip install python-docx")
+        
+        elif extension == '.csv':
+            try:
+                import csv
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    reader = csv.reader(f)
+                    rows = [" ".join(row) for row in reader]
+                    return "\n".join(rows)
+            except ImportError:
+                raise ImportError("csv module required for CSV support.")
         
         else:
             # Try to read as plain text for other formats
