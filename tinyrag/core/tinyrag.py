@@ -26,7 +26,8 @@ class TinyRag:
         vector_store: str = "faiss", 
         chunk_size: int = 500,
         vector_store_config: Optional[Dict[str, Any]] = None,
-        max_workers: Optional[int] = None
+        max_workers: Optional[int] = None,
+        system_prompt: Optional[str] = None
     ):
         """Initialize TinyRag with optional provider and vector store
         
@@ -36,6 +37,7 @@ class TinyRag:
             chunk_size: Size of text chunks for embedding
             vector_store_config: Additional configuration for vector store
             max_workers: Maximum number of threads for parallel processing. If None, uses default ThreadPoolExecutor behavior
+            system_prompt: Custom system prompt for LLM chat. If None, uses default prompt
         """
         # Initialize provider or create default one
         if provider is None:
@@ -46,6 +48,12 @@ class TinyRag:
         self.chunk_size = chunk_size
         self.max_workers = max_workers
         self._lock = Lock()  # For thread-safe operations
+        
+        # Set system prompt
+        self.system_prompt = system_prompt or (
+            "You are a helpful assistant. Use the provided context to answer questions accurately. "
+            "If the context doesn't contain relevant information, say so."
+        )
         
         # Determine embedding dimension based on model
         if self.provider.embedding_model == "default":
@@ -160,6 +168,22 @@ class TinyRag:
         else:
             return [text for text, score in results]  # Returns [text, ...]
     
+    def set_system_prompt(self, prompt: str) -> None:
+        """Update the system prompt for LLM chat
+        
+        Args:
+            prompt: New system prompt to use for chat completions
+        """
+        self.system_prompt = prompt
+    
+    def get_system_prompt(self) -> str:
+        """Get the current system prompt
+        
+        Returns:
+            Current system prompt string
+        """
+        return self.system_prompt
+    
     def chat(self, query: str, k: int = 3) -> str:
         """Retrieve relevant chunks and generate an answer using LLM"""
         # Check if API key is available for chat completion
@@ -186,7 +210,7 @@ class TinyRag:
         messages = [
             {
                 "role": "system",
-                "content": "You are a helpful assistant. Use the provided context to answer questions accurately. If the context doesn't contain relevant information, say so."
+                "content": self.system_prompt
             },
             {
                 "role": "user",
