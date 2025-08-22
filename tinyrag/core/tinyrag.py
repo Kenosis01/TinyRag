@@ -4,9 +4,13 @@ Main TinyRag class for Retrieval-Augmented Generation
 
 from typing import Union, List, Optional, Dict, Any, Tuple
 from pathlib import Path
+import concurrent.futures
+from threading import Lock
+from sentence_transformers import SentenceTransformer
 
 from .provider import Provider
 from .text_utils import extract_text, chunk_text
+from .code_parser import CodeParser
 from ..vector_stores import (
     FaissVectorStore, 
     MemoryVectorStore, 
@@ -18,24 +22,33 @@ from ..vector_stores import (
 class TinyRag:
     def __init__(
         self, 
-        provider: Provider, 
+        provider: Optional[Provider] = None, 
         vector_store: str = "faiss", 
         chunk_size: int = 500,
-        vector_store_config: Optional[Dict[str, Any]] = None
+        vector_store_config: Optional[Dict[str, Any]] = None,
+        max_workers: Optional[int] = None
     ):
-        """Initialize TinyRag with a provider and vector store
+        """Initialize TinyRag with optional provider and vector store
         
         Args:
-            provider: Provider instance for API calls
+            provider: Optional Provider instance for API calls. If None, only local embeddings will be used
             vector_store: Type of vector store ("faiss", "memory", "pickle", "chroma")
             chunk_size: Size of text chunks for embedding
             vector_store_config: Additional configuration for vector store
+            max_workers: Maximum number of threads for parallel processing. If None, uses default ThreadPoolExecutor behavior
         """
-        self.provider = provider
+        # Initialize provider or create default one
+        if provider is None:
+            self.provider = Provider()  # Uses default embedding model (all-MiniLM-L6-v2)
+        else:
+            self.provider = provider
+            
         self.chunk_size = chunk_size
+        self.max_workers = max_workers
+        self._lock = Lock()  # For thread-safe operations
         
         # Determine embedding dimension based on model
-        if provider.embedding_model == "default":
+        if self.provider.embedding_model == "default":
             dimension = 384  # all-MiniLM-L6-v2 dimension
         else:
             dimension = 1536  # OpenAI embedding dimension (adjust as needed)
@@ -54,26 +67,69 @@ class TinyRag:
             raise ValueError(f"Unsupported vector store: {vector_store}. "
                            f"Supported options: faiss, memory, pickle, chroma")
     
-    def add_documents(self, data: Union[str, Path, List[str]]) -> None:
-        """Add documents from text, file path, or list of texts"""
-        if isinstance(data, list):
-            # Handle list of texts or file paths
-            all_chunks = []
-            for item in data:
-                text = extract_text(item)
+    def _process_single_document(self, item: Union[str, Path]) -> List[str]:
+        """Process a single document and return its chunks"""
+        try:
+            text = extract_text(item)
+            if text.strip():
                 chunks = chunk_text(text, self.chunk_size)
-                all_chunks.extend(chunks)
+                print(f"✓ Processed: {item if isinstance(item, str) and len(str(item)) < 50 else str(item)[:50] + '...'}")
+                return chunks
+        except Exception as e:
+            print(f"⚠ Warning: Failed to process {item}: {e}")
+        return []
+
+    def add_documents(self, data: Union[str, Path, List[Union[str, Path]]], use_threading: bool = True) -> None:
+        """Add documents from text, file paths, or mixed list with optional multithreading
+        
+        Args:
+            data: Can be:
+                - Single file path: "document.pdf"
+                - Single text string: "This is raw text"
+                - List of files: ["doc1.pdf", "doc2.txt", "doc3.docx"]
+                - List of texts: ["Text 1", "Text 2", "Text 3"]
+                - Mixed list: ["document.pdf", "Raw text", "another.txt"]
+            use_threading: Whether to use multithreading for processing multiple documents
+        """
+        all_chunks = []
+        
+        if isinstance(data, (list, tuple)):
+            if use_threading and len(data) > 1:
+                # Use multithreading for multiple documents
+                print(f"Processing {len(data)} documents with multithreading (max_workers: {self.max_workers})...")
+                
+                with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                    # Submit all documents for processing
+                    future_to_item = {executor.submit(self._process_single_document, item): item for item in data}
+                    
+                    # Collect results as they complete
+                    for future in concurrent.futures.as_completed(future_to_item):
+                        chunks = future.result()
+                        if chunks:
+                            with self._lock:  # Thread-safe addition
+                                all_chunks.extend(chunks)
+            else:
+                # Sequential processing
+                print(f"Processing {len(data)} documents sequentially...")
+                for item in data:
+                    chunks = self._process_single_document(item)
+                    all_chunks.extend(chunks)
         else:
             # Handle single text or file path
-            text = extract_text(data)
-            all_chunks = chunk_text(text, self.chunk_size)
+            chunks = self._process_single_document(data)
+            all_chunks.extend(chunks)
         
         if all_chunks:
+            print(f"Generating embeddings for {len(all_chunks)} chunks...")
             # Generate embeddings for all chunks
             embeddings = self.provider.get_embeddings(all_chunks)
             
-            # Add to vector store
-            self.vector_store.add_vectors(embeddings, all_chunks)
+            # Add to vector store (thread-safe)
+            with self._lock:
+                self.vector_store.add_vectors(embeddings, all_chunks)
+            print(f"✓ Added {len(all_chunks)} chunks to vector store")
+        else:
+            print("⚠ No valid content found to add")
     
     def query(self, query: str, k: int = 5, return_scores: bool = True) -> Union[List[str], List[Tuple[str, float]]]:
         """Query the vector store without using LLM - just return similar chunks
@@ -99,6 +155,13 @@ class TinyRag:
     
     def chat(self, query: str, k: int = 3) -> str:
         """Retrieve relevant chunks and generate an answer using LLM"""
+        # Check if API key is available for chat completion
+        if not self.provider.api_key:
+            raise ValueError(
+                "No API key provided. Chat functionality requires an API key. "
+                "Initialize TinyRag with: Provider(api_key='your-key') or use query() method for similarity search only."
+            )
+        
         # Generate embedding for the query
         query_embedding = self.provider.get_embeddings([query])[0]
         

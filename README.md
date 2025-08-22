@@ -4,16 +4,18 @@
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A minimal, powerful Python library for **Retrieval-Augmented Generation (RAG)** with support for multiple document formats and vector storage backends.
+A minimal, powerful Python library for **Retrieval-Augmented Generation (RAG)** with **codebase indexing** and support for multiple document formats and vector storage backends.
 
 ## 🌟 Features
 
 - **🔌 Multiple Vector Stores**: Faiss, ChromaDB, In-Memory, Pickle-based
 - **📄 Document Support**: PDF, DOCX, TXT, and raw text
-- **🧠 Flexible Embeddings**: Local Sentence Transformers or API-based
+- **💻 Codebase Indexing**: Function-level indexing for all major programming languages
+- **🧠 Default Embeddings**: Uses all-MiniLM-L6-v2 by default (no API key needed)
+- **🚀 Multithreading Support**: Parallel document processing for faster indexing
 - **🔍 Query Without LLM**: Direct similarity search functionality
-- **💬 LLM Integration**: Chat completion with retrieved context
-- **⚡ Minimal Dependencies**: Core functionality with optional extras
+- **💬 Optional LLM Integration**: Chat completion with retrieved context
+- **⚡ Minimal Setup**: Works out of the box without configuration
 - **🎯 Easy to Use**: Simple API with powerful features
 
 ## 🚀 Quick Start
@@ -33,8 +35,27 @@ pip install tinyrag[chroma]   # Persistent storage
 pip install tinyrag[docs]     # Document processing
 ```
 
-### Usage Example
+### Usage Examples
 
+#### Basic Usage (No API Key Required)
+```python
+from tinyrag import TinyRag
+
+# Initialize with default all-MiniLM-L6-v2 embeddings
+rag = TinyRag()
+
+# Add documents and codebase
+rag.add_documents(["doc1.pdf", "doc2.txt", "Raw text"])
+rag.add_codebase("./my_project")  # Index entire codebase
+
+# Query documents and code
+results = rag.query("What is this about?")
+code_funcs = rag.search_code("authentication function")
+print("Similar chunks:", results)
+print("Code functions:", code_funcs)
+```
+
+#### With LLM for Chat
 ```python
 from tinyrag import Provider, TinyRag
 
@@ -45,12 +66,15 @@ provider = Provider(
     base_url="https://api.openai.com/v1"
 )
 
-rag = TinyRag(provider=provider, vector_store="faiss")
+rag = TinyRag(provider=provider, vector_store="faiss", max_workers=4)
 
-rag.add_documents("path/to/docs_or_raw_text")
+rag.add_documents([
+    "path/to/docs_or_raw_text",
+    "Another document", 
+    "More content"
+])
 
 response = rag.chat("Summarize the documents.")
-
 print(response)
 ```
 
@@ -109,6 +133,11 @@ rag.get_chunk_count()                      # Get number of chunks
 rag.get_all_chunks()                       # Get all text chunks
 rag.clear_documents()                      # Clear all data
 
+# Codebase Indexing
+rag.add_codebase(path)                     # Index codebase at function level
+rag.search_code(query, k=5, language=None) # Search code functions
+rag.get_function_by_name(name, k=3)        # Find functions by name
+
 # Querying (No LLM)
 rag.query(query, k=5, return_scores=True) # Basic similarity search
 rag.search_documents(query, k=5, min_score=0.0) # With score filtering
@@ -120,6 +149,42 @@ rag.chat(query, k=3)                      # Generate response with context
 # Persistence
 rag.save_vector_store(filepath)           # Save to disk
 rag.load_vector_store(filepath)           # Load from disk
+```
+
+### Codebase Indexing
+
+TinyRag can automatically parse and index codebases at the function level:
+
+#### Supported Languages
+- **Python** (.py)
+- **JavaScript/TypeScript** (.js, .ts)
+- **Java** (.java)
+- **C/C++** (.c, .cpp, .cc, .cxx, .h)
+- **Go** (.go)
+- **Rust** (.rs)
+- **PHP** (.php)
+
+#### Usage Examples
+
+```python
+from tinyrag import TinyRag
+
+rag = TinyRag()
+
+# Index entire codebase
+rag.add_codebase("./my_project", recursive=True)
+
+# Search for specific functionality
+auth_functions = rag.search_code("authentication login", k=5)
+
+# Search by programming language
+python_funcs = rag.search_code("database query", language="python")
+
+# Find specific function
+user_func = rag.get_function_by_name("create_user")
+
+# Code-aware chat (with API key)
+response = rag.chat("How does the authentication system work?")
 ```
 
 

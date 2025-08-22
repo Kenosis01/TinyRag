@@ -8,10 +8,10 @@ with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name="tinyrag",
-    version="0.1.0",
+    version="0.3.0",
     author="TinyRag Team",
-    author_email="contact@tinyrag.dev",
-    description="A minimal Python library for Retrieval-Augmented Generation with multiple vector store backends",
+    author_email="transformtrails@gmail.com",
+    description="A minimal Python library for Retrieval-Augmented Generation with codebase indexing and multiple vector store backends",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Kenosis01/TinyRag",
@@ -40,9 +40,14 @@ setup(
     ],
     python_requires=">=3.7",
     install_requires=[
-        "sentence-transformers>=2.2.0",
-        "requests>=2.25.0",
-        "numpy>=1.21.0",
+        "sentence-transformers",
+        "requests",
+        "numpy",
+        "faiss-cpu",
+        "scikit-learn",
+        "chromadb",
+        "PyPDF2",
+        "python-docx",
     ],
     extras_require={
         "faiss": ["faiss-cpu>=1.7.0"],
@@ -68,7 +73,8 @@ setup(
     },
     keywords=[
         "rag", "retrieval", "augmented", "generation", "vector", "database", 
-        "embeddings", "similarity", "search", "nlp", "ai", "machine-learning"
+        "embeddings", "similarity", "search", "nlp", "ai", "machine-learning",
+        "codebase", "code-indexing", "function-search", "code-analysis"
     ],
     include_package_data=True,
     zip_safe=False,

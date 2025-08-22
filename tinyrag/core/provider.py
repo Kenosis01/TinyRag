@@ -11,7 +11,7 @@ from sentence_transformers import SentenceTransformer
 class Provider:
     def __init__(
         self,
-        api_key: str,
+        api_key: Optional[str] = None,
         model: str = "gpt-3.5-turbo",
         embedding_model: str = "default",
         base_url: str = "https://api.openai.com/v1"

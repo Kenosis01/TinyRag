@@ -4,19 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tinyrag"
-version = "0.1.0"
-description = "A minimal Python library for Retrieval-Augmented Generation with multiple vector store backends"
+version = "0.3.0"
+description = "A minimal Python library for Retrieval-Augmented Generation with codebase indexing and multiple vector store backends"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "TinyRag Team", email = "contact@tinyrag.dev"}
+    {name = "TinyRag Team", email = "transformtrails@gmail.com"}
 ]
 maintainers = [
-    {name = "TinyRag Team", email = "contact@tinyrag.dev"}
+    {name = "TinyRag Team", email = "transformtrails@gmail.com"}
 ]
 keywords = [
     "rag", "retrieval", "augmented", "generation", "vector", "database", 
-    "embeddings", "similarity", "search", "nlp", "ai", "machine-learning"
+    "embeddings", "similarity", "search", "nlp", "ai", "machine-learning",
+    "codebase", "code-indexing", "function-search", "code-analysis"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -37,9 +38,14 @@ classifiers = [
 ]
 requires-python = ">=3.7"
 dependencies = [
-    "sentence-transformers>=2.2.0",
-    "requests>=2.25.0",
-    "numpy>=1.21.0",
+    "sentence-transformers",
+    "requests", 
+    "numpy",
+    "faiss-cpu",
+    "scikit-learn",
+    "chromadb",
+    "PyPDF2",
+    "python-docx",
 ]
 
 [project.optional-dependencies]
