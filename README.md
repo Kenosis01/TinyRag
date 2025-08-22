@@ -9,7 +9,7 @@
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](docs/README.md)
-[![Website](https://img.shields.io/badge/docs-TinyRag-blue)](https://tinyrag-docs.netlify.app/docs)
+
 
 
 A **lightweight, powerful Python library** for **Retrieval-Augmented Generation (RAG)** that works locally without API keys. Features advanced codebase indexing, multiple document formats, and flexible vector storage backends.
@@ -43,7 +43,7 @@ A **lightweight, powerful Python library** for **Retrieval-Augmented Generation 
 
 ## 🚀 Quick Start
 
-> **💡 New to TinyRag?** Check out our comprehensive [📖 Documentation](docs/README.md) with step-by-step guides!
+> **💡 New to TinyRag?** Check out our comprehensive [📖 Documentation](https://tinyrag-docs.netlify.app/docs) with step-by-step guides!
 
 ### Installation
 
