@@ -8,22 +8,40 @@
 [![PyPI version](https://badge.fury.io/py/tinyrag.svg)](https://badge.fury.io/py/tinyrag)
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](docs/README.md)
 
-A minimal, powerful Python library for **Retrieval-Augmented Generation (RAG)** with **codebase indexing** and support for multiple document formats and vector storage backends.
+A **lightweight, powerful Python library** for **Retrieval-Augmented Generation (RAG)** that works locally without API keys. Features advanced codebase indexing, multiple document formats, and flexible vector storage backends.
 
-## 🌟 Features
+> **🎯 Perfect for developers who need RAG capabilities without complexity or mandatory cloud dependencies.**
 
-- **🔌 Multiple Vector Stores**: Faiss, ChromaDB, In-Memory, Pickle-based
-- **📄 Document Support**: PDF, DOCX, TXT, and raw text
-- **💻 Codebase Indexing**: Function-level indexing for all major programming languages
-- **🧠 Default Embeddings**: Uses all-MiniLM-L6-v2 by default (no API key needed)
-- **🚀 Multithreading Support**: Parallel document processing for faster indexing
-- **🔍 Query Without LLM**: Direct similarity search functionality
-- **💬 Optional LLM Integration**: Chat completion with retrieved context
-- **⚡ Minimal Setup**: Works out of the box without configuration
-- **🎯 Easy to Use**: Simple API with powerful features
+## 🌟 Key Features
+
+### 🚀 **Works Locally - No API Keys Required**
+- **🧠 Local Embeddings**: Uses all-MiniLM-L6-v2 by default
+- **🔍 Direct Search**: Query documents without LLM costs
+- **⚡ Zero Setup**: Works immediately after installation
+
+### 📚 **Advanced Document Processing** 
+- **📄 Multi-Format**: PDF, DOCX, CSV, TXT, and raw text
+- **💻 Code Intelligence**: Function-level indexing for 7+ programming languages
+- **🧵 Multithreading**: Parallel processing for faster indexing
+- **📊 Chunking Strategies**: Smart text segmentation
+
+### 🗄️ **Flexible Storage Options**
+- **🔌 Multiple Backends**: Memory, Pickle, Faiss, ChromaDB
+- **💾 Persistence**: Automatic or manual data saving
+- **⚡ Performance**: Choose speed vs. memory trade-offs
+- **🔧 Configuration**: Customizable for any use case
+
+### 💬 **Optional AI Integration**
+- **🤖 Custom System Prompts**: Tailor AI behavior for your domain
+- **🔗 Provider Support**: OpenAI, Azure, Anthropic, local models
+- **💰 Cost Control**: Use only when needed
+- **🎯 RAG-Powered Chat**: Contextual AI responses
 
 ## 🚀 Quick Start
+
+> **💡 New to TinyRag?** Check out our comprehensive [📖 Documentation](docs/README.md) with step-by-step guides!
 
 ### Installation
 
@@ -42,270 +60,339 @@ pip install tinyrag[docs]     # Document processing
 
 ### Usage Examples
 
-#### Basic Usage (No API Key Required)
+### 🏃‍♂️ 30-Second Example (No API Key Required)
+
 ```python
 from tinyrag import TinyRag
 
-# Initialize with default all-MiniLM-L6-v2 embeddings
+# 1. Create TinyRag instance
 rag = TinyRag()
 
-# Add documents and codebase
-rag.add_documents(["doc1.pdf", "doc2.txt", "Raw text"])
-rag.add_codebase("./my_project")  # Index entire codebase
+# 2. Add your content  
+rag.add_documents([
+    "TinyRag makes RAG simple and powerful.",
+    "docs/user_guide.pdf",
+    "research_papers/"
+])
 
-# Query documents and code
-results = rag.query("What is this about?")
-code_funcs = rag.search_code("authentication function")
-print("Similar chunks:", results)
-print("Code functions:", code_funcs)
+# 3. Search your content
+results = rag.query("How does TinyRag work?", k=3)
+for text, score in results:
+    print(f"Score: {score:.2f} - {text[:100]}...")
 ```
 
-#### With LLM for Chat
+**Output:**
+```
+Score: 0.89 - TinyRag makes RAG simple and powerful.
+Score: 0.76 - TinyRag is a lightweight Python library for...
+Score: 0.72 - The system processes documents using semantic...
+```
+
+### 🤖 AI-Powered Chat (Optional)
+
 ```python
 from tinyrag import Provider, TinyRag
 
+# Set up AI provider
 provider = Provider(
-    api_key="sk-xxxxxx",
-    model="gpt-4",
-    embedding_model="default",
-    base_url="https://api.openai.com/v1"
+    api_key="sk-your-openai-key",
+    model="gpt-4"
 )
 
-rag = TinyRag(provider=provider, vector_store="faiss", max_workers=4)
+# Create smart assistant
+rag = TinyRag(
+    provider=provider,
+    system_prompt="You are a helpful technical assistant."
+)
 
-rag.add_documents([
-    "path/to/docs_or_raw_text",
-    "Another document", 
-    "More content"
-])
+# Add knowledge base
+rag.add_documents(["technical_docs/", "api_guides/"])
+rag.add_codebase("src/")  # Index your codebase
 
-response = rag.chat("Summarize the documents.")
+# Get intelligent answers
+response = rag.chat("How do I implement user authentication?")
 print(response)
+# AI response based on your specific docs and code!
 ```
 
-## 📖 Documentation
+## 📖 Complete Documentation
 
-### Core Components
+**📚 [Full Documentation](docs/README.md)** - Comprehensive guides from beginner to expert
 
-#### Provider Class
-Handles API interactions and embeddings:
+### 🚀 **Getting Started**
+- [**Quick Start**](docs/01-quick-start.md) - 5-minute introduction
+- [**Installation**](docs/02-installation.md) - Complete setup guide  
+- [**Basic Usage**](docs/03-basic-usage.md) - Core features without AI
+
+### 🔧 **Core Features**
+- [**Document Processing**](docs/04-document-processing.md) - PDF, DOCX, CSV, TXT
+- [**Codebase Indexing**](docs/05-codebase-indexing.md) - Function-level code search
+- [**Vector Stores**](docs/06-vector-stores.md) - Choose the right storage
+- [**Search & Query**](docs/07-search-query.md) - Similarity search techniques
+
+### 🤖 **AI Integration**
+- [**System Prompts**](docs/08-system-prompts.md) - Customize AI behavior
+- [**Chat Functionality**](docs/09-chat-functionality.md) - Build conversations
+- [**Provider Configuration**](docs/10-provider-config.md) - AI model setup
+
+---
+
+## 🔧 Core API Reference
+
+### Provider Class
 
 ```python
 from tinyrag import Provider
 
-# Local embeddings only (no API key needed)
+# 🆓 No API key needed - works locally
 provider = Provider(embedding_model="default")
 
-# With OpenAI API
+# 🤖 With AI capabilities
 provider = Provider(
     api_key="sk-your-key",
-    model="gpt-4",
-    embedding_model="text-embedding-ada-002",
-    base_url="https://api.openai.com/v1"
+    model="gpt-4",                           # GPT-4, GPT-3.5, local models
+    embedding_model="text-embedding-ada-002", # or "default" for local
+    base_url="https://api.openai.com/v1"     # OpenAI, Azure, custom
 )
 ```
 
-#### TinyRag Class
-Main interface for RAG operations:
+### TinyRag Class
 
 ```python
 from tinyrag import TinyRag
 
-# Initialize with different vector stores
-rag = TinyRag(provider, vector_store="memory")     # No dependencies
-rag = TinyRag(provider, vector_store="faiss")      # High performance  
-rag = TinyRag(provider, vector_store="chroma")     # Persistent
-rag = TinyRag(provider, vector_store="pickle")     # Simple file-based
+# 🎛️ Choose your vector store
+rag = TinyRag(
+    provider=provider,               # Optional: for AI chat
+    vector_store="faiss",           # memory, pickle, faiss, chromadb
+    chunk_size=500,                 # Text chunk size
+    max_workers=4,                  # Parallel processing
+    system_prompt="Custom prompt"   # AI behavior
+)
 ```
 
-### Vector Store Comparison
+### 🗄️ Vector Store Comparison
 
 | Store | Performance | Persistence | Memory | Dependencies | Best For |
 |-------|-------------|-------------|---------|--------------|----------|
-| **Memory** | Good | Manual | High | None | Development, small datasets |
-| **Faiss** | Excellent | Manual | Low | faiss-cpu | Large-scale, performance-critical |
-| **ChromaDB** | Good | Automatic | Medium | chromadb | Production, automatic persistence |
-| **Pickle** | Fair | Manual | Medium | scikit-learn | Simple file-based storage |
+| **Memory** | ⚡ Fast | ❌ None | 📈 High | ✅ None | Development, testing |
+| **Pickle** | 🐌 Fair | 💾 Manual | 📊 Medium | ✅ Minimal | Simple projects |
+| **Faiss** | 🚀 Excellent | 💾 Manual | 📉 Low | 📦 faiss-cpu | Large datasets, speed |
+| **ChromaDB** | ⚡ Good | 🔄 Auto | 📊 Medium | 📦 chromadb | Production, features |
 
-### API Reference
+> **💡 Recommendation:** Start with `memory` for development, use `faiss` for production performance.
 
-#### Core Methods
+## 🔧 Essential Methods
 
 ```python
-# Document Management
-rag.add_documents(data)                    # Add documents/text
-rag.get_chunk_count()                      # Get number of chunks
-rag.get_all_chunks()                       # Get all text chunks
-rag.clear_documents()                      # Clear all data
+# 📄 Document Management
+rag.add_documents(["file.pdf", "text"])   # Add any documents
+rag.add_codebase("src/")                   # Index code functions
+rag.clear_documents()                      # Reset everything
 
-# Codebase Indexing
-rag.add_codebase(path)                     # Index codebase at function level
-rag.search_code(query, k=5, language=None) # Search code functions
-rag.get_function_by_name(name, k=3)        # Find functions by name
+# 🔍 Search & Query (No AI needed)
+results = rag.query("search term", k=5)   # Find similar content
+code = rag.query("auth function")          # Search code too
 
-# Querying (No LLM)
-rag.query(query, k=5, return_scores=True) # Basic similarity search
-rag.search_documents(query, k=5, min_score=0.0) # With score filtering
-rag.get_similar_chunks(text, k=5)         # Find similar to given text
+# 🤖 AI Chat (Optional)
+response = rag.chat("Explain this code")   # Get AI answers
+rag.set_system_prompt("Be helpful")        # Customize AI
 
-# LLM Integration
-rag.chat(query, k=3)                      # Generate response with context
-
-# Persistence
-rag.save_vector_store(filepath)           # Save to disk
-rag.load_vector_store(filepath)           # Load from disk
+# 💾 Persistence
+rag.save_vector_store("my_data.pkl")       # Save your work
+rag.load_vector_store("my_data.pkl")       # Load it back
 ```
 
-### Codebase Indexing
+> **📖 [Complete API Reference](docs/18-api-reference.md)** - Full method documentation
 
-TinyRag can automatically parse and index codebases at the function level:
+## 💻 Code Intelligence
 
-#### Supported Languages
-- **Python** (.py)
-- **JavaScript/TypeScript** (.js, .ts)
-- **Java** (.java)
-- **C/C++** (.c, .cpp, .cc, .cxx, .h)
-- **Go** (.go)
-- **Rust** (.rs)
-- **PHP** (.php)
+TinyRag indexes your codebase at the **function level** for intelligent code search:
 
-#### Usage Examples
+### 🌐 Supported Languages
+
+| Language | Extensions | Detection |
+|----------|------------|----------|
+| **Python** | `.py` | `def function_name` |
+| **JavaScript** | `.js`, `.ts` | `function name()`, `const name =` |
+| **Java** | `.java` | `public/private type name()` |
+| **C/C++** | `.c`, `.cpp`, `.h` | `return_type function_name()` |
+| **Go** | `.go` | `func functionName()` |
+| **Rust** | `.rs` | `fn function_name()` |
+| **PHP** | `.php` | `function functionName()` |
+
+### 🔍 Code Search Examples
 
 ```python
-from tinyrag import TinyRag
+# Index your entire project
+rag.add_codebase("my_app/")
 
-rag = TinyRag()
+# Find authentication code
+auth_code = rag.query("user authentication login")
 
-# Index entire codebase
-rag.add_codebase("./my_project", recursive=True)
+# Database functions
+db_code = rag.query("database query SELECT")
 
-# Search for specific functionality
-auth_functions = rag.search_code("authentication login", k=5)
+# API endpoints
+api_code = rag.query("REST API endpoint")
 
-# Search by programming language
-python_funcs = rag.search_code("database query", language="python")
-
-# Find specific function
-user_func = rag.get_function_by_name("create_user")
-
-# Code-aware chat (with API key)
-response = rag.chat("How does the authentication system work?")
+# Get AI explanations (with API key)
+response = rag.chat("How does user authentication work?")
+# AI analyzes your actual code and explains it!
 ```
 
+> **💡 [Learn More](docs/05-codebase-indexing.md)** - Advanced code search techniques
 
-## 🔧 Configuration Options
 
-### Vector Store Configuration
+## ⚙️ Configuration Examples
 
+### 🚀 Performance Optimized
 ```python
-# Faiss with custom settings
+# Large datasets, maximum speed
 rag = TinyRag(
-    provider=provider,
     vector_store="faiss",
-    chunk_size=1000,  # Larger chunks
-    vector_store_config={}
+    chunk_size=800,
+    max_workers=8  # Parallel processing
 )
+```
 
-# ChromaDB with persistence
+### 💾 Production Setup
+```python
+# Persistent, multi-user ready
 rag = TinyRag(
     provider=provider,
-    vector_store="chroma", 
+    vector_store="chromadb",
     vector_store_config={
-        "collection_name": "my_collection",
-        "persist_directory": "./chroma_db"
+        "collection_name": "company_docs",
+        "persist_directory": "/data/vectors/"
     }
 )
-
-# Memory store (no config needed)
-rag = TinyRag(provider=provider, vector_store="memory")
-
-# Pickle store with scikit-learn
-rag = TinyRag(provider=provider, vector_store="pickle")
 ```
 
-### Provider Configuration
-
+### 🤖 Custom AI Assistant
 ```python
-# Local embeddings only
-provider = Provider(embedding_model="default")
-
-# OpenAI with custom settings
-provider = Provider(
-    api_key="sk-your-key",
-    model="gpt-3.5-turbo",
-    embedding_model="text-embedding-ada-002",
-    base_url="https://api.openai.com/v1"
-)
-
-# Custom API endpoint
-provider = Provider(
-    api_key="your-key",
-    model="custom-model",
-    base_url="https://your-custom-api.com/v1"
+# Domain-specific AI behavior
+rag = TinyRag(
+    provider=provider,
+    system_prompt="""You are a senior software engineer.
+    Provide detailed technical explanations with code examples."""
 )
 ```
 
-## 📦 Installation Options
+> **🔧 [Full Configuration Guide](docs/12-configuration.md)** - All options explained
+
+## 📦 Installation
+
+### 🎯 Choose Your Setup
 
 ```bash
-# Minimal installation
+# 🚀 Quick start (works immediately)
 pip install tinyrag
 
-# With specific vector stores
-pip install tinyrag[faiss]      # For high-performance similarity search
-pip install tinyrag[chroma]     # For persistent vector database
-pip install tinyrag[pickle]     # For simple file-based storage
+# ⚡ High performance (recommended)
+pip install tinyrag[faiss]
 
-# With document processing
-pip install tinyrag[docs]       # PDF and DOCX support
+# 📄 Document processing (PDF, DOCX)
+pip install tinyrag[docs]
 
-# Everything included
-pip install tinyrag[all]        # All optional dependencies
+# 🗄️ Production database
+pip install tinyrag[chroma]
+
+# 🎁 Everything included
+pip install tinyrag[all]
 ```
 
-## 🛠️ Development
+### 🔧 What Each Option Includes
 
-### Requirements
+| Option | Includes | Use Case |
+|--------|----------|----------|
+| **Base** | Memory store, local embeddings | Development, testing |
+| **[faiss]** | + High-performance search | Large datasets |
+| **[docs]** | + PDF/DOCX processing | Document analysis |
+| **[chroma]** | + Persistent database | Production apps |
+| **[all]** | + Everything | Full features |
 
-- Python 3.7+
-- sentence-transformers (core)
-- requests (core)
-- numpy (core)
+> **💡 [Installation Guide](docs/02-installation.md)** - Detailed setup instructions
 
-### Optional Dependencies
+## 🎯 Real-World Use Cases
 
-- `faiss-cpu`: High-performance vector search
-- `chromadb`: Persistent vector database
-- `scikit-learn`: Pickle vector store similarity
-- `PyPDF2`: PDF document processing
-- `python-docx`: Word document processing
+### 🏢 **Business Applications**
+- **📋 Customer Support**: Query company docs and policies
+- **📚 Knowledge Management**: Searchable internal documentation
+- **🔍 Research Tools**: Semantic search through research papers
+- **📊 Report Analysis**: Find insights across business reports
 
-### Contributing
+### 👨‍💻 **Developer Tools**
+- **🔧 Code Documentation**: Auto-generate code explanations
+- **🔍 Legacy Code Explorer**: Understand large codebases
+- **📖 API Assistant**: Query technical documentation
+- **🧪 Testing Helper**: Find relevant test patterns
 
-1. Fork the repository: https://github.com/Kenosis01/TinyRag.git
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes and add tests
-4. Submit a pull request
+### 🎓 **Educational & Research**
+- **📚 Study Assistant**: Query textbooks and notes
+- **📝 Writing Helper**: Research paper analysis
+- **🧠 Learning Companion**: Personalized explanations
+- **📊 Data Analysis**: Explore datasets semantically
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Support
-
-- **GitHub Issues**: [Report bugs or request features](https://github.com/Kenosis01/TinyRag/issues)
-- **Documentation**: [Full documentation](https://github.com/Kenosis01/TinyRag)
-- **Examples**: Check the `examples/` directory in the repository
-
-## 🎯 Use Cases
-
-- **Document Q&A**: Query your documents without LLM costs
-- **Knowledge Base**: Build searchable knowledge repositories  
-- **Content Discovery**: Find similar content in large document collections
-- **RAG Applications**: Full retrieval-augmented generation workflows
-- **Research Tools**: Semantic search through research papers
-- **Customer Support**: Query company documentation and policies
+> **💡 [See Complete Examples](docs/15-examples.md)** - Production-ready applications
 
 ---
 
-**TinyRag** - Making RAG simple, powerful, and accessible! 🚀
+## 🛠️ Contributing
+
+We welcome contributions! Here's how to get started:
+
+```bash
+# 1. Fork and clone
+git clone https://github.com/Kenosis01/TinyRag.git
+cd TinyRag
+
+# 2. Install development dependencies  
+pip install -e ".[all,dev]"
+
+# 3. Run tests
+python -m pytest
+
+# 4. Make your changes and submit a PR!
+```
+
+### 📋 **Development Setup**
+- **Python 3.7+** required
+- **Core dependencies**: sentence-transformers, requests, numpy
+- **Optional**: faiss-cpu, chromadb, PyPDF2, python-docx
+
+> **🔧 [Development Guide](CONTRIBUTING.md)** - Detailed contributor guidelines
+
+## 🤝 Community & Support
+
+### 📞 **Get Help**
+- **📖 [Complete Documentation](docs/README.md)** - Comprehensive guides
+- **🐛 [GitHub Issues](https://github.com/Kenosis01/TinyRag/issues)** - Bug reports & feature requests
+- **💬 [Discussions](https://github.com/Kenosis01/TinyRag/discussions)** - Community Q&A
+- **📋 [FAQ](docs/19-faq.md)** - Common questions answered
+
+### 🎉 **Show Your Support**
+- ⭐ **Star this repo** if TinyRag helps you!
+- 🐦 **Share on Twitter** - spread the word
+- ☕ **[Buy me a coffee](https://buymeacoffee.com/kenosis)** - support development
+- 🤝 **Contribute** - help make TinyRag better
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+
+**🚀 TinyRag - Making RAG Simple, Powerful, and Accessible! 🚀**
+
+*Build intelligent search and Q&A systems in minutes, not hours*
+
+[![GitHub stars](https://img.shields.io/github/stars/Kenosis01/TinyRag?style=social)](https://github.com/Kenosis01/TinyRag)
+[![PyPI downloads](https://img.shields.io/pypi/dm/tinyrag)](https://pypi.org/project/tinyrag/)
+[![GitHub last commit](https://img.shields.io/github/last-commit/Kenosis01/TinyRag)](https://github.com/Kenosis01/TinyRag)
+
+</div>
