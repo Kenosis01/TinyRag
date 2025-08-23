@@ -1,30 +1,155 @@
 # Provider Configuration
 
-Configure AI providers and models for TinyRag's chat functionality. Support for OpenAI, Anthropic, local models, and custom endpoints.
+Configure AI providers and embedding models for TinyRag's enhanced functionality. Support for multiple embedding providers (local, OpenAI, Ollama), structured responses with citations, and intelligent caching.
 
 ## 🎯 What is a Provider?
 
-A Provider in TinyRag handles the connection to AI language models. It manages API keys, model selection, and communication with AI services.
+A Provider in TinyRag handles both embedding generation and LLM communication. With the enhanced multi-provider system, you can:
+- Choose embedding providers independently from chat models
+- Use local embeddings with cloud LLM chat
+- Get structured responses with source citations
+- Benefit from intelligent document caching
 
-## 🚀 Basic Provider Setup
+## 🚀 Multi-Provider Setup
 
-### OpenAI Provider
+### Local Embeddings (Default - No API Key Required)
 
 ```python
 from tinyrag import Provider, TinyRag
 
-# Basic OpenAI setup
+# Local embeddings with sentence-transformers (recommended for cost efficiency)
 provider = Provider(
-    api_key="sk-your-openai-key",
-    model="gpt-4",
-    base_url="https://api.openai.com/v1"
+    embedding_provider="local",
+    embedding_model="all-MiniLM-L6-v2"  # Fast, accurate, 384 dimensions
 )
 
 # Use with TinyRag
 rag = TinyRag(provider=provider)
+
+# This works for search without any API keys!
+rag.add_documents(["document.pdf", "text content"])
+results = rag.query_structured("your question", format_type="json")
 ```
 
-### Environment Variables (Recommended)
+### OpenAI Embeddings + Chat
+
+```python
+# OpenAI embeddings with chat functionality
+provider = Provider(
+    api_key="sk-your-openai-key",
+    model="gpt-4",
+    embedding_provider="openai",
+    embedding_model="text-embedding-ada-002"
+)
+
+rag = TinyRag(provider=provider)
+rag.add_documents(["documents/"])
+
+# Structured chat with citations
+response = rag.chat_structured(
+    "Explain the key concepts",
+    format_type="markdown"
+)
+print(response)  # Shows answer with source citations
+```
+
+### Ollama Local Embeddings
+
+```python
+# Use local Ollama for embeddings
+provider = Provider(
+    embedding_provider="ollama",
+    embedding_model="nomic-embed-text",
+    ollama_base_url="http://localhost:11434"
+)
+
+rag = TinyRag(provider=provider)
+```
+
+### Hybrid Setup: Local Embeddings + Cloud Chat
+
+```python
+# Cost-effective: Local embeddings + OpenAI chat
+provider = Provider(
+    api_key="sk-your-key",
+    model="gpt-3.5-turbo",          # Chat model
+    embedding_provider="local",      # Local embeddings (free)
+    embedding_model="all-MiniLM-L6-v2"
+)
+
+rag = TinyRag(
+    provider=provider,
+    enable_cache=True,  # Cache embeddings to avoid re-processing
+    system_prompt="You are a helpful assistant that provides detailed answers with proper citations."
+)
+```
+
+## 📊 Structured Responses & Citations
+
+### Enhanced Output Formats
+
+```python
+# Setup provider (any embedding type works)
+provider = Provider(
+    api_key="sk-your-key",  # Optional for search-only
+    embedding_provider="local"  # or "openai", "ollama"
+)
+
+rag = TinyRag(provider=provider)
+rag.add_documents(["research.pdf", "manual.docx", "notes.txt"])
+
+# Structured search results (no LLM needed)
+query = "machine learning algorithms"
+
+# Text format with citations
+text_result = rag.query_structured(query, format_type="text")
+print(text_result)
+# Output includes:
+# - Answer summary
+# - Source files with relevance scores
+# - Document types and chunk positions
+
+# JSON format for APIs
+json_result = rag.query_structured(query, format_type="json")
+# Perfect for web applications and integrations
+
+# Markdown format for documentation
+md_result = rag.query_structured(query, format_type="markdown")
+# Great for reports and documentation
+```
+
+### Chat with Citations (Requires API Key)
+
+```python
+# Setup with LLM for enhanced chat
+provider = Provider(
+    api_key="sk-your-key",
+    model="gpt-4",
+    embedding_provider="local",  # Save costs on embeddings
+)
+
+rag = TinyRag(
+    provider=provider,
+    system_prompt="Provide detailed explanations with proper source attribution."
+)
+
+# Enhanced chat with automatic citations
+response = rag.chat_structured(
+    "What are the best practices for data preprocessing?",
+    k=5,  # Use top 5 most relevant sources
+    format_type="markdown"
+)
+
+print(response)
+# Output includes:
+# - Detailed LLM-generated answer
+# - Automatic citation numbers [1], [2], etc.
+# - Complete source list with file names, scores, and previews
+# - Confidence scoring
+# - Processing time metrics
+```
+
+## 🔑 Environment Variables & Security
 
 ```python
 import os
@@ -34,170 +159,286 @@ os.environ["OPENAI_API_KEY"] = "sk-your-openai-key"
 
 # Provider automatically uses environment variable
 provider = Provider(
-    model="gpt-4"
+    model="gpt-4",
+    embedding_provider="local"  # Use local embeddings to save costs
     # api_key automatically loaded from OPENAI_API_KEY
 )
-```
 
-### Complete Configuration Example
-
-```python
-# Full provider configuration
-provider = Provider(
-    api_key="sk-your-key",
-    model="gpt-4",
-    embedding_model="text-embedding-ada-002",
-    base_url="https://api.openai.com/v1",
-    temperature=0.7,
-    max_tokens=2000
-)
-
+# Complete configuration with caching
 rag = TinyRag(
     provider=provider,
-    vector_store="faiss",
-    system_prompt="You are a helpful assistant."
+    vector_store="faiss",  # High-performance for large datasets
+    enable_cache=True,     # Avoid re-processing documents
+    cache_dir=".tinyrag_cache"
 )
 ```
 
-## 🤖 Supported Models
+## 🤖 Embedding Model Comparison
 
-### OpenAI Models
+### Local Models (sentence-transformers)
 
 ```python
-# GPT-4 Models (recommended for best quality)
-gpt4_provider = Provider(
-    model="gpt-4",              # Latest GPT-4
-    api_key="sk-your-key"
+# Fast and lightweight (recommended)
+fast_provider = Provider(
+    embedding_provider="local",
+    embedding_model="all-MiniLM-L6-v2"  # 384 dim, 80MB, fast
 )
 
-gpt4_turbo_provider = Provider(
-    model="gpt-4-turbo",        # Faster, cheaper GPT-4
-    api_key="sk-your-key"
+# High accuracy
+accurate_provider = Provider(
+    embedding_provider="local", 
+    embedding_model="all-mpnet-base-v2"  # 768 dim, 420MB, accurate
 )
 
-# GPT-3.5 Models (faster, cheaper)
-gpt35_provider = Provider(
-    model="gpt-3.5-turbo",      # Standard GPT-3.5
-    api_key="sk-your-key"
+# Multilingual support
+multilingual_provider = Provider(
+    embedding_provider="local",
+    embedding_model="paraphrase-multilingual-MiniLM-L12-v2"
 )
 
-gpt35_16k_provider = Provider(
-    model="gpt-3.5-turbo-16k",  # Larger context window
-    api_key="sk-your-key"
-)
-
-# Compare model performance
+# Compare models
 models = {
-    "GPT-4": gpt4_provider,
-    "GPT-4 Turbo": gpt4_turbo_provider,
-    "GPT-3.5": gpt35_provider
+    "Fast": fast_provider,
+    "Accurate": accurate_provider,
+    "Multilingual": multilingual_provider
 }
 
-question = "Explain machine learning in simple terms"
-
-for model_name, provider in models.items():
+query = "machine learning concepts"
+for name, provider in models.items():
     rag = TinyRag(provider=provider)
-    rag.add_documents(["ml_docs.txt"])
+    rag.add_documents(["ml_textbook.pdf"])
     
-    response = rag.chat(question)
-    print(f"\n=== {model_name} ===")
-    print(response[:200] + "...")
+    result = rag.query_structured(query, k=3, format_type="json")
+    print(f"{name}: {len(result['sources'])} sources found")
 ```
 
-### Model Selection Guidelines
+### OpenAI Embeddings
 
 ```python
-def choose_model(use_case, budget="medium"):
-    """Recommend model based on use case and budget."""
+# High-quality embeddings (paid)
+openai_provider = Provider(
+    api_key="sk-your-key",
+    embedding_provider="openai",
+    embedding_model="text-embedding-ada-002",  # 1536 dimensions
+    model="gpt-4"  # For chat functionality
+)
+
+# Best for: Production applications requiring highest quality
+# Cost: ~$0.0001 per 1K tokens
+```
+
+### Ollama Local Models
+
+```python
+# Self-hosted embeddings
+ollama_provider = Provider(
+    embedding_provider="ollama",
+    embedding_model="nomic-embed-text",
+    ollama_base_url="http://localhost:11434"
+)
+
+# Requires: ollama pull nomic-embed-text
+# Best for: Privacy-focused applications, no internet dependency
+```
+
+## 📈 Provider Selection Guide
+
+### Choose the Right Combination
+
+```python
+def get_recommended_setup(use_case, budget="medium", privacy="normal"):
+    """Get recommended provider configuration"""
     
-    recommendations = {
-        ("high_quality", "high"): "gpt-4",
-        ("high_quality", "medium"): "gpt-4-turbo", 
-        ("high_quality", "low"): "gpt-3.5-turbo",
+    configurations = {
+        # Research & Development
+        ("research", "low", "normal"): {
+            "embedding_provider": "local",
+            "embedding_model": "all-MiniLM-L6-v2",
+            "chat_model": None,  # Search-only
+            "description": "Fast local search, no API costs"
+        },
         
-        ("fast_response", "high"): "gpt-4-turbo",
-        ("fast_response", "medium"): "gpt-3.5-turbo",
-        ("fast_response", "low"): "gpt-3.5-turbo",
+        ("research", "medium", "normal"): {
+            "embedding_provider": "local",
+            "embedding_model": "all-mpnet-base-v2",
+            "chat_model": "gpt-3.5-turbo",
+            "description": "Accurate embeddings + affordable chat"
+        },
         
-        ("large_context", "high"): "gpt-4",
-        ("large_context", "medium"): "gpt-4-turbo",
-        ("large_context", "low"): "gpt-3.5-turbo-16k",
+        ("research", "high", "normal"): {
+            "embedding_provider": "openai",
+            "embedding_model": "text-embedding-ada-002",
+            "chat_model": "gpt-4",
+            "description": "Premium quality for critical applications"
+        },
         
-        ("code_analysis", "high"): "gpt-4",
-        ("code_analysis", "medium"): "gpt-4-turbo",
-        ("code_analysis", "low"): "gpt-3.5-turbo"
+        # Privacy-focused
+        ("private", "any", "high"): {
+            "embedding_provider": "ollama",
+            "embedding_model": "nomic-embed-text",
+            "chat_model": None,
+            "description": "Fully local, no data leaves your system"
+        },
+        
+        # Production applications
+        ("production", "medium", "normal"): {
+            "embedding_provider": "local",
+            "embedding_model": "all-MiniLM-L6-v2",
+            "chat_model": "gpt-4",
+            "description": "Cost-effective with premium chat quality"
+        }
     }
     
-    return recommendations.get((use_case, budget), "gpt-3.5-turbo")
+    key = (use_case, budget, privacy)
+    return configurations.get(key, configurations[("research", "low", "normal")])
 
 # Usage examples
-customer_support_model = choose_model("fast_response", "low")      # gpt-3.5-turbo
-research_model = choose_model("high_quality", "high")             # gpt-4
-code_review_model = choose_model("code_analysis", "medium")       # gpt-4-turbo
+setups = [
+    ("research", "low", "normal"),
+    ("production", "medium", "normal"),
+    ("private", "any", "high")
+]
 
-print(f"Customer Support: {customer_support_model}")
-print(f"Research: {research_model}")
-print(f"Code Review: {code_review_model}")
+for use_case, budget, privacy in setups:
+    config = get_recommended_setup(use_case, budget, privacy)
+    print(f"\n{use_case.title()} ({budget} budget, {privacy} privacy):")
+    print(f"  Embeddings: {config['embedding_provider']} - {config['embedding_model']}")
+    print(f"  Chat: {config['chat_model'] or 'Search-only'}")
+    print(f"  Notes: {config['description']}")
 ```
 
-## 🔧 Advanced Provider Configuration
-
-### Custom Parameters
+### Real-World Setup Examples
 
 ```python
-# Fine-tune model behavior
-custom_provider = Provider(
+# Startup/Research: Cost-effective with great results
+startup_provider = Provider(
+    api_key="sk-your-key",  # Only needed for chat
+    model="gpt-3.5-turbo",
+    embedding_provider="local",
+    embedding_model="all-MiniLM-L6-v2"
+)
+
+# Enterprise: High performance and reliability
+enterprise_provider = Provider(
     api_key="sk-your-key",
     model="gpt-4",
-    temperature=0.3,        # Lower = more focused, higher = more creative
-    max_tokens=1500,        # Maximum response length
-    top_p=0.9,             # Nucleus sampling parameter
+    embedding_provider="openai",
+    embedding_model="text-embedding-ada-002",
+    base_url="https://api.openai.com/v1"  # Or your custom endpoint
+)
+
+# Privacy-first: Everything local
+privacy_provider = Provider(
+    embedding_provider="ollama",
+    embedding_model="nomic-embed-text",
+    ollama_base_url="http://localhost:11434"
+    # No API key needed - fully local
+)
+
+# Budget-conscious: Search without LLM costs
+budget_provider = Provider(
+    embedding_provider="local",
+    embedding_model="all-MiniLM-L6-v2"
+    # No API key - search and structured output only
+)
+```
+
+## ⚡ Performance & Caching Configuration
+
+### Intelligent Document Caching
+
+```python
+# Enable smart caching (recommended)
+rag = TinyRag(
+    provider=provider,
+    enable_cache=True,
+    cache_dir=".tinyrag_cache",  # Custom cache location
+    vector_store="faiss",       # High-performance storage
+    max_workers=4               # Parallel processing
+)
+
+# Cache automatically handles:
+# - Document change detection
+# - Embedding model changes 
+# - Configuration changes
+# - Efficient storage and retrieval
+
+# Cache management
+print("Cache info:", rag.get_cache_info())
+rag.cleanup_old_cache(days=30)  # Remove old entries
+rag.clear_cache()               # Clear all cache
+```
+
+### Advanced Provider Configuration
+
+```python
+# Fine-tune provider behavior
+advanced_provider = Provider(
+    # Embedding configuration
+    embedding_provider="local",
+    embedding_model="all-MiniLM-L6-v2",
+    
+    # Chat configuration (optional)
+    api_key="sk-your-key",
+    model="gpt-4",
+    temperature=0.3,        # Lower = more focused
+    max_tokens=1500,        # Response length limit
+    top_p=0.9,             # Nucleus sampling
     frequency_penalty=0.1,  # Reduce repetition
     presence_penalty=0.1    # Encourage topic diversity
 )
 
-# Different configurations for different purposes
-configs = {
-    "creative": Provider(
-        model="gpt-4",
-        temperature=0.9,    # High creativity
-        top_p=0.95,
-        max_tokens=2000
-    ),
-    
-    "analytical": Provider(
-        model="gpt-4",
-        temperature=0.2,    # Low creativity, focused
-        top_p=0.8,
-        max_tokens=1500
-    ),
-    
-    "balanced": Provider(
-        model="gpt-4-turbo",
-        temperature=0.7,    # Balanced
-        max_tokens=1200
-    )
-}
-
-# Use different configs for different tasks
-creative_rag = TinyRag(provider=configs["creative"])
-analytical_rag = TinyRag(provider=configs["analytical"])
+# Optimized TinyRag configuration
+rag = TinyRag(
+    provider=advanced_provider,
+    vector_store="faiss",
+    chunk_size=400,           # Optimal for most documents
+    enable_cache=True,
+    system_prompt="""You are a knowledgeable assistant that provides 
+    accurate answers based on the given context. Always cite your sources 
+    and indicate confidence levels."""
+)
 ```
 
-### Embedding Model Configuration
+### Multi-Environment Setup
 
 ```python
-# Custom embedding models
-provider = Provider(
-    api_key="sk-your-key",
-    model="gpt-4",
-    embedding_model="text-embedding-ada-002",  # OpenAI embedding
-    embedding_dimensions=1536                  # Optional: specify dimensions
+# Development environment
+dev_provider = Provider(
+    embedding_provider="local",
+    embedding_model="all-MiniLM-L6-v2",
+    # No API key needed for development
 )
 
-# Different embedding models for different purposes
-embedding_configs = {
-    "standard": "text-embedding-ada-002",      # General purpose
+# Staging environment
+staging_provider = Provider(
+    api_key=os.getenv("STAGING_OPENAI_KEY"),
+    model="gpt-3.5-turbo",
+    embedding_provider="local"
+)
+
+# Production environment
+production_provider = Provider(
+    api_key=os.getenv("PROD_OPENAI_KEY"),
+    model="gpt-4",
+    embedding_provider="openai",
+    embedding_model="text-embedding-ada-002"
+)
+
+# Environment-specific configuration
+def get_provider(environment="dev"):
+    providers = {
+        "dev": dev_provider,
+        "staging": staging_provider,
+        "prod": production_provider
+    }
+    return providers.get(environment, dev_provider)
+
+# Usage
+current_env = os.getenv("ENVIRONMENT", "dev")
+provider = get_provider(current_env)
+rag = TinyRag(provider=provider, enable_cache=True)
+```
     "search": "text-search-ada-doc-001",       # Optimized for search
     "similarity": "text-similarity-ada-001"    # Optimized for similarity
 }
