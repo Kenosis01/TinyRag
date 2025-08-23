@@ -5,7 +5,7 @@ Faiss vector store implementation
 import numpy as np
 import pickle
 import os
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any, Optional
 
 from .base import BaseVectorStore
 
@@ -23,8 +23,8 @@ class FaissVectorStore(BaseVectorStore):
         
         self.index = self.faiss.IndexFlatIP(dimension)  # Inner product for cosine similarity
     
-    def add_vectors(self, embeddings: List[List[float]], texts: List[str]):
-        """Add vectors and corresponding texts to the store"""
+    def add_vectors(self, embeddings: List[List[float]], texts: List[str], metadata: Optional[List[Dict[str, Any]]] = None):
+        """Add vectors and corresponding texts to the store with optional metadata"""
         embeddings_array = np.array(embeddings, dtype=np.float32)
         
         # Normalize for cosine similarity
@@ -34,9 +34,15 @@ class FaissVectorStore(BaseVectorStore):
         self.index.add(embeddings_array)
         self.texts.extend(texts)
         self.embeddings.extend(embeddings)
+        
+        # Add metadata (default empty dict if not provided)
+        if metadata:
+            self.metadata.extend(metadata)
+        else:
+            self.metadata.extend([{} for _ in texts])
     
-    def search(self, query_embedding: List[float], k: int = 5) -> List[Tuple[str, float]]:
-        """Search for similar vectors"""
+    def search(self, query_embedding: List[float], k: int = 5, return_metadata: bool = False) -> List[Tuple[str, float, Optional[Dict[str, Any]]]]:
+        """Search for similar vectors with optional metadata"""
         if self.index.ntotal == 0:
             return []
         
@@ -52,7 +58,8 @@ class FaissVectorStore(BaseVectorStore):
         results = []
         for score, idx in zip(scores[0], indices[0]):
             if idx >= 0:  # Valid index
-                results.append((self.texts[idx], float(score)))
+                metadata = self.metadata[idx] if return_metadata and idx < len(self.metadata) else None
+                results.append((self.texts[idx], float(score), metadata))
         
         return results
     
@@ -61,7 +68,8 @@ class FaissVectorStore(BaseVectorStore):
         data = {
             'texts': self.texts,
             'embeddings': self.embeddings,
-            'dimension': self.dimension
+            'dimension': self.dimension,
+            'metadata': self.metadata
         }
         
         # Save index
@@ -84,6 +92,7 @@ class FaissVectorStore(BaseVectorStore):
                 self.texts = data['texts']
                 self.embeddings = data['embeddings']
                 self.dimension = data['dimension']
+                self.metadata = data.get('metadata', [])  # Backward compatibility
     
     def clear(self):
         """Clear all stored vectors and texts"""

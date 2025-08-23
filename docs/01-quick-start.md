@@ -106,6 +106,42 @@ rag = TinyRag(
 rag.set_system_prompt("You are a helpful coding assistant.")
 ```
 
+## 🔧 Multiple Embedding Providers
+
+```python
+from tinyrag import Provider
+
+# Local models (no API key needed)
+provider = Provider.create_local_provider("all-mpnet-base-v2")  # Higher quality
+rag = TinyRag(provider=provider)
+
+# OpenAI embeddings (requires API key)
+provider = Provider.create_openai_provider("sk-your-key")
+rag = TinyRag(provider=provider)
+
+# Ollama local server (requires Ollama running)
+provider = Provider.create_ollama_provider("nomic-embed-text")
+rag = TinyRag(provider=provider)
+```
+
+## 📦 Smart Document Caching
+
+```python
+# Caching is enabled by default - speeds up repeated operations
+rag = TinyRag(enable_cache=True)  # Default: True
+
+# First time - processes and caches documents
+rag.add_documents(["large_dataset/"])
+
+# Second time - loads from cache (up to 10x faster!)
+rag.add_documents(["large_dataset/"])  # Uses cached version
+
+# Check cache status
+cache_info = rag.get_cache_info()
+print(f"Cached documents: {cache_info['total_documents']}")
+print(f"Cache size: {cache_info['cache_size_mb']:.1f} MB")
+```
+
 ## ⚡ Performance Tips
 
 ```python
@@ -121,6 +157,7 @@ rag.add_documents(file_list, use_threading=True)
 
 ## 🏃‍♂️ Ready to Learn More?
 
+- **[Multi-Provider Embeddings](11-multi-provider-embeddings.md)** - Local, OpenAI, Ollama, custom
 - **[Basic Usage](03-basic-usage.md)** - More examples without AI
 - **[System Prompts](08-system-prompts.md)** - Customize AI behavior
 - **[Document Processing](04-document-processing.md)** - Work with different file types

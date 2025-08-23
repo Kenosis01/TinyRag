@@ -42,9 +42,11 @@ Welcome to TinyRag - a lightweight, powerful Python library for Retrieval-Augmen
 
 **Want to jump in?** See [Basic Usage](03-basic-usage.md)
 
+**Need multiple embedding providers?** Check [Multi-Provider Embeddings](11-multi-provider-embeddings.md)
+
 **Setting up AI chat?** Check [System Prompts](08-system-prompts.md)
 
-**Need help?** Visit [Troubleshooting](14-troubleshooting.md)
+**Need help?** Visit [Troubleshooting](15-troubleshooting.md)
 
 ## 💡 Key Features
 

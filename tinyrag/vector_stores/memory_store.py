@@ -4,7 +4,7 @@ In-memory vector store implementation using numpy
 
 import numpy as np
 import pickle
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any, Optional
 
 from .base import BaseVectorStore
 
@@ -15,8 +15,8 @@ class MemoryVectorStore(BaseVectorStore):
         super().__init__(dimension)
         self.vectors = np.array([]).reshape(0, dimension)
     
-    def add_vectors(self, embeddings: List[List[float]], texts: List[str]):
-        """Add vectors and corresponding texts to the store"""
+    def add_vectors(self, embeddings: List[List[float]], texts: List[str], metadata: Optional[List[Dict[str, Any]]] = None):
+        """Add vectors and corresponding texts to the store with optional metadata"""
         embeddings_array = np.array(embeddings, dtype=np.float32)
         
         # Normalize for cosine similarity
@@ -30,9 +30,15 @@ class MemoryVectorStore(BaseVectorStore):
         
         self.texts.extend(texts)
         self.embeddings.extend(embeddings)
+        
+        # Add metadata (default empty dict if not provided)
+        if metadata:
+            self.metadata.extend(metadata)
+        else:
+            self.metadata.extend([{} for _ in texts])
     
-    def search(self, query_embedding: List[float], k: int = 5) -> List[Tuple[str, float]]:
-        """Search for similar vectors using cosine similarity"""
+    def search(self, query_embedding: List[float], k: int = 5, return_metadata: bool = False) -> List[Tuple[str, float, Optional[Dict[str, Any]]]]:
+        """Search for similar vectors using cosine similarity with optional metadata"""
         if len(self.texts) == 0:
             return []
         
@@ -53,7 +59,8 @@ class MemoryVectorStore(BaseVectorStore):
         
         results = []
         for idx in top_indices:
-            results.append((self.texts[idx], float(similarities[idx])))
+            metadata = self.metadata[idx] if return_metadata and idx < len(self.metadata) else None
+            results.append((self.texts[idx], float(similarities[idx]), metadata))
         
         return results
     
@@ -63,7 +70,8 @@ class MemoryVectorStore(BaseVectorStore):
             'texts': self.texts,
             'embeddings': self.embeddings,
             'vectors': self.vectors,
-            'dimension': self.dimension
+            'dimension': self.dimension,
+            'metadata': self.metadata
         }
         
         with open(f"{filepath}.pkl", 'wb') as f:
@@ -78,6 +86,7 @@ class MemoryVectorStore(BaseVectorStore):
                 self.embeddings = data['embeddings']
                 self.vectors = data['vectors']
                 self.dimension = data['dimension']
+                self.metadata = data.get('metadata', [])  # Backward compatibility
         except FileNotFoundError:
             print(f"File {filepath}.pkl not found")
     
